@@ -12,9 +12,17 @@ START_CELL = (4,0)
 
 i=0
 rounds = 1
-curr_state = WIN_CELL
-rewards = np.zeros([5,6])
+curr_state = START_CELL
+rewards = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+			[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+			[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+			[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+			[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+# for i in range(5):
+# 	for j in range(6):	
+# 		rewards[i][j] = 0.0
 exploration_prob = 0.4
+learning_rate = 0.25
 paths = list()
 end = False
 def giveReward():
@@ -26,8 +34,8 @@ def giveReward():
 		return 0
 def gamehasEnded():
 	if curr_state == WIN_CELL or curr_state == LOSE_CELL:
-		return True
-	return False
+		end = True
+	end = False
 
 def position(action):
 	if action == 'up':
@@ -43,25 +51,46 @@ def position(action):
 			return pos
 	return curr_state
 
+def reset():
+	rewards = np.zeros([5,6])
+	curr_state = START_CELL
+
 
 while i<rounds:
-	if gamehasEnded:
+	print("Current position : ",curr_state)
+	print("Game has Ended : ",end)
+	if end == True:
 		rewards[curr_state] = giveReward()
-		# print()
-		# reverse order to update the rewards
-		# reset the game
+		for i in reversed(paths):
+			reward = rewards[i]+learning_rate*(rewards[curr_state] - rewards[i])
+		reset()
 		i = i+1
 	else:
 		p = np.random.rand()
+		print("Current prob : ",p)
 		if(p>=exploration_prob):
 			max_next_reward = 0.0
 			for action in actions:
-				new_pos = position[action]
-				next_reward = rewards[new_pos]
+				print('Action taken : ',action)
+				print('Max reward : ',max_next_reward)
+				new_pos = position(action)
+				r=new_pos[0]
+				c=new_pos[1]
+				print(new_pos)
+				# rewards[r][c]
+				next_reward = rewards[r][c]
+				print('Next reward : ',next_reward) 
 				if next_reward >= max_next_reward:
 					next_pos = new_pos
 					next_action = action
 					max_next_reward = next_reward
-			paths.append(next_pos)
-			curr_state = next_pos
-			
+		else:
+			next_action = np.random.choice(actions)
+			next_pos = position(next_action)
+		print('Next final action : ', next_action)
+		print('Next final position : ', next_pos)
+		paths.append(next_pos)
+		curr_state = next_pos
+		if curr_state == WIN_CELL or curr_state == LOSE_CELL:
+			end = True
+
